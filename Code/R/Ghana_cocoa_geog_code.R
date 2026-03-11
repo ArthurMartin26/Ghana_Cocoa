@@ -1,39 +1,36 @@
 # ================================================================
 # Ghana ADM2 interactive maps
 # - basic_interactive: blue ADM2 boundaries
-# - int_cocoa: cocoa hectares choropleth (YlOrRd)
+# - int_cocoa: cocoa hectares
+
+## original code but now redundant use cocoa mapping will delete soon 
+# notes Atiwa west needs coding for 4 and attin fosu needs coding for 2 in CSSVD intensity they got dropped in the merge 
 # ================================================================
+source("Code/R/packages and functions.R")
 
-library(sf)
-library(dplyr)
-library(stringr)
-library(leaflet)
-library(readr)
-library(tools)
-library(scales)
+here()
 
+#directory paths 
+geog_data_dir <- ("Data/Data_Raw/Geographic")
+output_figs_dir <- ("Outputs/figures")
 # ---------------------------
-# 1) Paths
+# 1) file Paths
 # ---------------------------
-user <- Sys.getenv("USERNAME")
 
-if (user == "Arthur.Martin") {
-  base_directory <- paste0(
-    "C:/Users/", user,
-    "/OneDrive - Department of Health and Social Care/Documents/LSE/",
-    "DV496_A_METRICS/Ghana Bartik"
-  )
-}
-
-adm2_path <- file.path(base_directory, "geoBoundaries-GHA-ADM2_simplified.geojson")
-cocoa_path <- file.path(base_directory, "ghana-cocoa-area-2020.csv")
-
+adm2_path <- file.path(geog_data_dir, "geoBoundaries-GHA-ADM2_simplified.geojson")
+cocoa_path <- file.path(geog_data_dir, "ghana-cocoa-area-2020.csv")
+cssvd_intensity_path <- file.path(geog_data_dir, "spatial-metrics-ghana-cocoa-cocoa_area_district.csv")
 # ---------------------------
 # 2) Load data
 # ---------------------------
 adm2 <- st_read(adm2_path, quiet = TRUE)
 
 ghana_cocoa_area_2020 <- read_csv(cocoa_path, show_col_types = FALSE)
+
+cssvd_intensity_df <- read_csv(cssvd_intensity_path, show_col_types = FALSE)
+
+cssvd_df <- cssvd_intensity_df |> 
+  
 
 cocoa_df <- ghana_cocoa_area_2020 |>
   mutate(region = toTitleCase(tolower(region))) |>
@@ -46,10 +43,10 @@ cocoa_df <- ghana_cocoa_area_2020 |>
 clean_admin_name <- function(x) {
   x %>%
     str_to_upper() %>%
-    str_replace_all("[[:punct:]]", " ") %>%
-    str_squish() %>%
     str_replace_all("\\bMUNIC?I?PAL\\b", "") %>%
     str_replace_all("\\bMUNICIPALITY\\b", "") %>%
+    str_replace_all("[[:punct:]]", " ") %>%
+    str_squish() %>%
     str_replace_all("\\bMETROPOLITAN\\b", "") %>%
     str_replace_all("\\bDISTRICT\\b", "") %>%
     str_replace_all("\\bREGION\\b", "") %>%
@@ -136,6 +133,14 @@ int_cocoa <- leaflet(joined) %>%
     opacity = 0.75,
     labFormat = labelFormat(big.mark = ",", digits = 0)
   )
+
+## save map 
+
+saveWidget(
+  int_cocoa,
+  file = file.path( output_figs_dir, "cocoa_area_interactive.html"),
+  selfcontained = TRUE
+)
 
 # ---------------------------
 # 7) Print maps (optional)

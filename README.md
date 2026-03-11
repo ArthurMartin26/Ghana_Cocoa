@@ -119,4 +119,3 @@ This repository contains **code and documentation only**. The following folders 
 - `Outputs/`  
   Generated tables, figures, maps, and regression outputs.
 
-A recommended structure is:

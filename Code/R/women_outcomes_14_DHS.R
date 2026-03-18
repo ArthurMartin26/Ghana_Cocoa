@@ -7,13 +7,13 @@ source("Code/R/packages and functions.R")
 # ----------------------------
 
 # Employment-related variables
-employ_vars <- c("v741", "v716", "v714", "v732", "v731")
+employ_vars_14 <- c("v741", "v716", "v714", "v732", "v731")
 
 # Intra-household / agency variables
-intra_hh_vars <- c("v739", "v743a", "v743b", "v743d")
+intra_hh_vars_14 <- c("v739", "v743a", "v743b", "v743d")
 
 # Wealth index (household-level; attached to woman record)
-wealth_vars <- c("v190", "v191")
+wealth_vars_14 <- c("v190", "v191")
 
 # ----------------------------
 # 2) File paths (2014)

@@ -12,7 +12,6 @@ dir.create(output_figs_dir, recursive = TRUE, showWarnings = FALSE)
 # 1) File Paths
 # ---------------------------
 adm2_path <- file.path(geog_data_dir, "geoBoundaries-GHA-ADM2_simplified.geojson")
-
 # NEW: Use the spatial metrics file (contains hectares + CSSVD_intensity_2014)
 cssvd_intensity_path <- file.path(geog_data_dir, "spatial-metrics-ghana-cocoa-cocoa_area_district.csv")
 
@@ -20,8 +19,8 @@ cssvd_intensity_path <- file.path(geog_data_dir, "spatial-metrics-ghana-cocoa-co
 # 2) Load data
 # ---------------------------
 adm2 <- st_read(adm2_path, quiet = TRUE)
-
 cssvd_intensity_df <- read_csv(cssvd_intensity_path, show_col_types = FALSE)
+
 
 # This is now your main district-level dataset
 # Assume it includes:

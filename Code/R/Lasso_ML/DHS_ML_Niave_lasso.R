@@ -12,15 +12,15 @@ library(Matrix)
 library(readr)
 
 # --------------------- Load data ---------------------
-hr_path <- "Data/Data_Raw/DHS/GH_2022_DHS_Standard/GHHR8CFL.DTA"   # <-- EDIT THIS
+hr_path <- "Data/Data_Raw/DHS/GH_2022_DHS_Standard/GHHR8CFL.DTA"  
 hr <- read_dta(hr_path)
 
 # Keep IDs for exporting predictions later
-id_vars <- c("hv001","hv002")  # cluster & household IDs (DHS standard)
+id_vars <- c("hv001","hv002")  # cluster & household IDs 
 
 # --------------------- Define target ---------------------
-# Wealth quintile: hv270 (1=poorest ... 5=richest)
-# We'll classify "poor" as bottom 40% (quintiles 1-2). Change to 1 for bottom 20%.
+# Wealth quintile: hv270 (1=poorest . 5=richest)
+# classify "poor" as bottom 40% (quintiles 1-2). Change to 1 for bottom 20%.
 poverty_quintile_cutoff <- 2
 hr <- hr %>%
   filter(!is.na(hv270)) %>%
@@ -30,8 +30,8 @@ hr <- hr %>%
   )
 
 # --------------------- Predictor set (Route A) ---------------------
-# Rich, phase-8 style list including geography, HH composition, and assets/housing.
-# Not all variables exist in every survey; we'll intersect with actual columns.
+#list including geography, HH composition, and assets/housing.
+# Not all variables exist in every survey, intersect with actual columns.
 cand <- c(
   # Geography & HH composition
   "hv024","hv025","hv009","hv012","hv013","hv014","hv018","hv019",
@@ -44,7 +44,7 @@ cand <- c(
 x_vars <- intersect(cand, names(hr))
 
 # Build modelling data:
-# - Keep IDs (for export), wt, poor, and predictors
+# - Keep IDs  wt, poor, and predictors
 # - Convert labelled -> factor for categoricals
 dat0 <- hr %>%
   select(any_of(c(id_vars, "poor", "wt", x_vars))) %>%
@@ -84,7 +84,7 @@ prep_rec <- prep(rec, training = train, verbose = FALSE)
 bake_to_matrix <- function(new_data) {
   baked_df <- bake(prep_rec, new_data = new_data, composition = "data.frame")
   
-  # Keep a copy of ids from the original new_data
+  # Keep  ids from the original new_data
   ids_out <- new_data %>% dplyr::select(dplyr::any_of(id_vars))
   
   # Build X by dropping outcome, weight, and IDs
@@ -92,8 +92,6 @@ bake_to_matrix <- function(new_data) {
     dplyr::select(-poor, -wt, -dplyr::any_of(id_vars))
   
   # Convert to sparse matrix efficiently
-  # model.matrix() builds a design matrix; ~ . - 1 avoids intercept
-  # But we already have numeric/dummies, so just go via Matrix::Matrix
   X <- Matrix::Matrix(as.matrix(x_df), sparse = TRUE)
   
   y <- baked_df$poor
@@ -109,20 +107,17 @@ set.seed(2026)
 cvfit <- cv.glmnet(
   x = trn$X, y = trn$y,
   family = "binomial",
-  alpha  = 1,               # LASSO
+  alpha  = 1, # LASSO
   weights = trn$w,
   nfolds  = 10,
-  standardize = FALSE       # already standardized in recipe
+  standardize = FALSE # already standardized in recipe
 )
 
 lambda_min <- cvfit$lambda.min
-lambda_1se <- cvfit$lambda.1se  # more parsimonious
+lambda_1se <- cvfit$lambda.1se 
 lambda_star <- lambda_1se
 
 # --------------------- Evaluate on test ---------------------
-# --------------------- Evaluate on test (fixed) ---------------------
-# --------------------- Evaluate on test (yardstick df API) ---------------------
-# --------------------- Evaluate on test (robust, yardstick df API) ---------------------
 
 # 1) Predicted probabilities on test set
 p_test <- as.numeric(predict(cvfit, newx = tst$X, s = lambda_star, type = "response"))
@@ -133,24 +128,24 @@ y_test_fac <- factor(tst$y, levels = c(0, 1), labels = c("0","1"))
 # 3) Build evaluation df
 eval_df <- tibble::tibble(truth = y_test_fac, .pred = p_test)
 
-# 4) AUC
+# 4) AUC - read more about AUC 
 auc_val <- yardstick::roc_auc(eval_df, truth = truth, .pred, event_level = "second")$.estimate
 cat(sprintf("\nUnweighted AUC: %.3f\n", auc_val))
 
-# 5) ROC curve + Youden's J threshold
+# 5) ROC curve + Youden's J threshold - read more on ROC curve and Youden thesdhold 
 roc_tbl <- yardstick::roc_curve(eval_df, truth = truth, .pred, event_level = "second")
 roc_df  <- as.data.frame(roc_tbl)
 
 # yardstick gives 'specificity' and 'sensitivity'; compute fallout = 1 - specificity
 roc_df$fallout <- 1 - roc_df$specificity
 
-# Some endpoints can have non-finite thresholds; drop them before argmax
+# if endpoints can have non-finite thresholds need to  drop them before argmax
 roc_df_finite <- subset(roc_df, is.finite(.threshold))
 
 # Compute Youden's J
 roc_df_finite$youden <- roc_df_finite$sensitivity - roc_df_finite$fallout
 
-# Choose threshold (break ties by taking the smallest threshold achieving max J)
+# Choose threshold 
 j_max <- max(roc_df_finite$youden, na.rm = TRUE)
 thr <- min(roc_df_finite$.threshold[which(roc_df_finite$youden == j_max)], na.rm = TRUE)
 

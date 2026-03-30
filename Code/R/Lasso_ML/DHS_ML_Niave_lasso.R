@@ -11,6 +11,8 @@ library(labelled)
 library(Matrix)
 library(readr)
 
+
+
 # --------------------- Load data ---------------------
 hr_path <- "Data/Data_Raw/DHS/GH_2022_DHS_Standard/GHHR8CFL.DTA"  
 hr <- read_dta(hr_path)
